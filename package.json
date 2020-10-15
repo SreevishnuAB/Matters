@@ -1,0 +1,22 @@
+{
+  "name": "matters",
+  "version": "1.0.0",
+  "description": "Backend for Matters, a simple task management app",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SreevishnuAB/Matters.git"
+  },
+  "author": "Sreevishnu",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/SreevishnuAB/Matters/issues"
+  },
+  "homepage": "https://github.com/SreevishnuAB/Matters#readme",
+  "dependencies": {
+    "fastify": "^3.6.0"
+  }
+}
