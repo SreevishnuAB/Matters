@@ -1,5 +1,18 @@
-CREATE TYPE tstatus AS ENUM('Not started', 'In progress', 'Completed');
+-- DROP TRIGGER IF EXISTS update_task_status ON task_items;
+-- DROP FUNCTION IF EXISTS update_status();
+
+-- DROP TABLE IF EXISTS task_items;
+-- DROP TABLE IF EXISTS tasks;
+-- DROP TABLE IF EXISTS users;
+
+-- DROP TYPE IF EXISTS tstatus;
+-- DROP TYPE IF EXISTS ttype;
+-- DROP TYPE IF EXISTS tpriority;
+
+
+CREATE TYPE tstatus AS ENUM('Not Started', 'In Progress', 'Completed');
 CREATE TYPE ttype AS ENUM('Short-term', 'Long-term');
+CREATE TYPE tpriority AS ENUM('Low', 'Medium', 'High', 'Very High');
 
 CREATE TABLE IF NOT EXISTS users(
   email VARCHAR PRIMARY KEY,
@@ -9,22 +22,24 @@ CREATE TABLE IF NOT EXISTS users(
 
 CREATE TABLE IF NOT EXISTS tasks(
   id UUID PRIMARY KEY,
-  title VARCHAR,
-  task_type ttype,
-  task_status tstatus DEFAULT 'Not started',
+  title VARCHAR NOT NULL,
+  task_type ttype NOT NULL,
+  task_status tstatus DEFAULT 'Not Started',
+  task_priority tpriority NOT NULL,
   owner_id VARCHAR REFERENCES users(email) ON DELETE CASCADE,
-  date_created TIMESTAMPTZ,
-  date_updated TIMESTAMPTZ
+  date_created TIMESTAMPTZ NOT NULL,
+  date_updated TIMESTAMPTZ NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS task_items(
   item_id UUID PRIMARY KEY,
   task_id UUID REFERENCES tasks(id) ON DELETE CASCADE,
-  item_title VARCHAR,
-  details VARCHAR,
-  item_status tstatus DEFAULT 'Not started',
-  date_created TIMESTAMPTZ,
-  date_updated TIMESTAMPTZ
+  item_title VARCHAR NOT NULL,
+  item_priority tpriority NOT NULL,
+  notes VARCHAR,
+  item_status tstatus DEFAULT 'Not Started',
+  date_created TIMESTAMPTZ NOT NULL,
+  date_updated TIMESTAMPTZ NOT NULL
 );
 
 CREATE OR REPLACE FUNCTION update_status()
@@ -34,19 +49,19 @@ DECLARE
   count_inprog integer := 0;
   count_completed integer := 0;
   count_notstarted integer := 0;
-  new_status tstatus := 'Not started'; 
+  new_status tstatus := 'Not Started'; 
 BEGIN
   SELECT count(*) INTO count_notstarted FROM task_items
-    WHERE task_id = NEW.task_id AND item_status = 'Not started';
+    WHERE task_id = NEW.task_id AND item_status = 'Not Started';
   SELECT count(*) INTO count_inprog FROM task_items
-    WHERE task_id = NEW.task_id AND item_status = 'In progress';
+    WHERE task_id = NEW.task_id AND item_status = 'In Progress';
   SELECT count(*) INTO count_completed FROM task_items
     WHERE task_id = NEW.task_id AND item_status = 'Completed';
   
   IF (count_completed <> 0 AND count_inprog = 0 AND count_notstarted = 0) THEN
     new_status = 'Completed';
   ELSIF (count_inprog <> 0 OR (count_notstarted <> 0 AND count_completed <> 0)) THEN
-    new_status = 'In progress';
+    new_status = 'In Progress';
   END IF;
 
   UPDATE tasks SET task_status = new_status, date_updated = NEW.date_updated WHERE id = NEW.task_id;
